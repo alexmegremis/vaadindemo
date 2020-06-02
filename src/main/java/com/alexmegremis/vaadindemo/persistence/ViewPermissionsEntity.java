@@ -3,12 +3,13 @@ package com.alexmegremis.vaadindemo.persistence;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.io.Serializable;
 
 @Entity
 @Table (name = "VIEW_PERMISSIONS")
 @Data
 @IdClass(PermissionsID.class)
-public class ViewPermissionsEntity {
+public class ViewPermissionsEntity implements Serializable {
 
     @Id
     @Column (name = "ID_PERSON", nullable = true)

@@ -3,11 +3,12 @@ package com.alexmegremis.vaadindemo.persistence;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.io.Serializable;
 
 @Entity
 @Table (name = "VIEW_PRINCIPAL")
 @Data
-public class ViewPrincipalEntity {
+public class ViewPrincipalEntity implements Serializable {
 
     @Basic
     @Column (name = "ID_PERSON", nullable = true)
