@@ -1,71 +1,51 @@
 package com.alexmegremis.vaadindemo;
 
 import com.alexmegremis.vaadindemo.persistence.*;
-import com.vaadin.annotations.Theme;
-import com.vaadin.navigator.View;
-import com.vaadin.navigator.ViewDisplay;
 import com.vaadin.server.VaadinRequest;
-import com.vaadin.shared.ui.ValueChangeMode;
+import com.vaadin.shared.data.sort.SortDirection;
 import com.vaadin.spring.annotation.SpringUI;
-import com.vaadin.spring.annotation.SpringViewDisplay;
 import com.vaadin.ui.*;
+import com.vaadin.ui.components.grid.ItemClickListener;
 
-@Theme ("valo")
+import java.util.Map;
+import java.util.stream.Collectors;
+
+//@Theme ("valo")
 @SpringUI
-@SpringViewDisplay
-public class MainView extends UI implements ViewDisplay {
+public class MainView extends UI {
 
-    private final PermissionsRepo permissionsRepo;
-    private final PrincipalsRepo  principalsRepo;
+    private final ViewPermissionsService service;
 
-    final Grid<ViewPermissionsEntity> permissionsGrid = new Grid<>(ViewPermissionsEntity.class);
-    final Grid<ViewPrincipalEntity>   principalsGrid  = new Grid<>(ViewPrincipalEntity.class);
-
-    private Panel springViewDisplay;
-
-    public MainView(final PermissionsRepo permissionsRepo, final PrincipalsRepo principalsRepo) {
-        this.permissionsRepo = permissionsRepo;
-        this.principalsRepo = principalsRepo;
+    public MainView(final ViewPermissionsService service) {
+        this.service = service;
     }
 
     @Override
     protected void init(final VaadinRequest vaadinRequest) {
 
-        permissionsGrid.setWidth(100f, Unit.PERCENTAGE);
-        principalsGrid.setWidth(100f, Unit.PERCENTAGE);
+        Grid<DispositionDTO> permissionsGrid = new Grid<>(DispositionDTO.class);
 
-        permissionsGrid.setColumns("nameFirst", "nameLast", "principal", "repo", "permissionBits");
+        permissionsGrid.setSizeFull();
 
-        permissionsGrid.setItems(permissionsRepo.findAll());
-        principalsGrid.setItems(principalsRepo.findAll());
+        permissionsGrid.setColumns("nameFirst", "nameLast", "principal", "repo", "permissionBits", "disposition");
+        permissionsGrid.getColumn("disposition").setEditorComponent(new TextField("foo")).setEditable(true);
+        permissionsGrid.addComponentColumn(DispositionDTO -> {
+            Button button = new Button("Click me!");
+            button.addClickListener(click ->
+                                            Notification.show("Clicked: " + DispositionDTO.getNameLast().toString()));
+            return button;
+        });
+//        permissionsGrid.addItemClickListener((ItemClickListener<DispositionDTO>) event -> permissionsGrid.getEditor().setEnabled(event.getColumn().getCaption().equals("Disposition")));
 
-        TextField filterNameLast = new TextField();
-        filterNameLast.setPlaceholder("Filter by last name");
-        filterNameLast.setValueChangeMode(ValueChangeMode.EAGER);
-        filterNameLast.addValueChangeListener(e -> permissionsGrid.setItems(permissionsRepo.findByNameLastStartsWithIgnoreCase(e.getValue())));
 
-        TextField filterNameFirst = new TextField();
-        filterNameFirst.setPlaceholder("Filter by first name");
-        filterNameFirst.setValueChangeMode(ValueChangeMode.EAGER);
-        filterNameFirst.addValueChangeListener(e -> permissionsGrid.setItems(permissionsRepo.findByNameFirstStartsWithIgnoreCase(e.getValue())));
+        permissionsGrid.setDataProvider((sortOrders, offset, limit) -> {
+            Map<String, Boolean> sortOrder = sortOrders.stream().collect(Collectors.toMap(sort -> sort.getSorted(), sort -> sort.getDirection() == SortDirection.ASCENDING));
 
-        springViewDisplay = new Panel();
-        springViewDisplay.setSizeFull();
+            return service.findAll(offset, limit, sortOrder).stream();
+        }, () -> service.count());
 
-        VerticalLayout layout = new VerticalLayout(filterNameLast, filterNameFirst, permissionsGrid, principalsGrid, springViewDisplay);
+        VerticalLayout layout = new VerticalLayout(permissionsGrid);
         layout.setSizeFull();
-        layout.setWidth(100f, Unit.PERCENTAGE);
-
-        layout.setExpandRatio(springViewDisplay, 1.0f);
-
-        layout.setMargin(true);
-        layout.setSpacing(true);
-
         setContent(layout);
-    }
-
-    @Override
-    public void showView(final View view) {
-        springViewDisplay.setContent((Component) view);
     }
 }

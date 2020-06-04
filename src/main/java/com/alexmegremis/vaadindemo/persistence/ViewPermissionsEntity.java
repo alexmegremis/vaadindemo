@@ -1,6 +1,7 @@
 package com.alexmegremis.vaadindemo.persistence;
 
-import lombok.Data;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -8,6 +9,9 @@ import java.io.Serializable;
 @Entity
 @Table (name = "VIEW_PERMISSIONS")
 @Data
+@SuperBuilder(toBuilder = true)
+@AllArgsConstructor
+@NoArgsConstructor
 @IdClass(PermissionsID.class)
 public class ViewPermissionsEntity implements Serializable {
 
